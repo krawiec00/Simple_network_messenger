@@ -10,7 +10,7 @@ public class Server {
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket()) {
             serverSocket.setReuseAddress(true);  // Ustawienie REUSEADDR na serwerze
-            serverSocket.bind(new InetSocketAddress(PORT));
+            serverSocket.bind(new InetSocketAddress("127.0.0.1", PORT));
 
             System.out.println("Server is listening on port " + PORT);
 

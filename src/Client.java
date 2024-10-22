@@ -7,6 +7,7 @@ public class Client {
     private static final int SERVER_PORT = 4321;
     private static final int PORT_RANGE_START = 40000;
     private static final int PORT_RANGE_END = 50000;
+    private static boolean running = true;
 
     public static void main(String[] args) {
         Client client = new Client();
@@ -54,21 +55,24 @@ public class Client {
                 }
             }
 
-            // Uruchamiamy osobny wątek do nasłuchiwania odpowiedzi serwera
+            // Osobny wątek do nasłuchiwania odpowiedzi serwera
             new Thread(() -> {
                 try {
                     String serverResponse;
                     while ((serverResponse = input.readLine()) != null) {
-                        if(serverResponse.startsWith("Message from")){
+                        if (serverResponse.startsWith("Message from")) {
                             System.out.println("\nServer: " + serverResponse);
+                        } else {
+                            System.out.println("Server: " + serverResponse);
                         }
-                        else {
-                        System.out.println("Server: " + serverResponse);}
-                        // Po otrzymaniu wiadomości wyświetlamy ponownie zachętę do wpisania komendy
                         System.out.print("Enter command (LIST, MESG <ID> <MESSAGE>, QUIT): ");
                     }
+
                 } catch (IOException e) {
-                    System.out.println("Error reading from server: " + e.getMessage());
+                    if (running) {
+                        System.out.println("\nServer has stopped working");
+                        System.exit(0);
+                    }
                 }
             }).start();
 
@@ -76,13 +80,13 @@ public class Client {
             Scanner scanner = new Scanner(System.in);
             String userMessage;
 
-            // Pierwsze wyświetlenie zachęty do wpisania komendy
             System.out.print("Enter command (LIST, MESG <ID> <MESSAGE>, QUIT): ");
             while (true) {
                 userMessage = scanner.nextLine();
 
                 if (userMessage.equalsIgnoreCase("QUIT")) {
                     output.println("QUIT");
+                    running = false;
                     System.out.println("Disconnected");
                     break;
                 }
@@ -98,9 +102,12 @@ public class Client {
             }
 
             socket.close();
+        } catch (ConnectException e) {
+            System.out.println("Unable connect to the server");
         } catch (IOException e) {
             System.out.println("Client error: " + e.getMessage());
         }
+
     }
 
     // Funkcja do sekwencyjnego szukania wolnego portu
@@ -108,10 +115,10 @@ public class Client {
         for (int port = PORT_RANGE_START; port <= PORT_RANGE_END; port++) {
             try {
                 ServerSocket testSocket = new ServerSocket(port);
-                testSocket.close(); // Zamykamy, bo jest wolny
-                return port; // Zwracamy wolny port
+                testSocket.close();
+                return port; // Zwracanie wolnego portu
             } catch (IOException e) {
-                // Port jest zajęty, próbujemy kolejny
+                // Port jest zajęty, szukanie kolejnego
             }
         }
         return -1; // Brak wolnych portów
